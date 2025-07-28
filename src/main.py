@@ -8,7 +8,8 @@ import os
 
 
 
-
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
 EMAIL_SENDER = os.getenv("EMAIL_SENDER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
 EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
@@ -36,9 +37,12 @@ def send_email(subject, body):
     msg['Subject'] = subject
     msg.attach(MIMEText(body, 'plain'))
 
-    with smtplib.SMTP_SSL("smtp.gmail.com", 465) as server:
-        server.login(EMAIL_SENDER, EMAIL_PASSWORD)
-        server.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, msg.as_string())
+    server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
+    server.starttls()
+    print(EMAIL_SENDER)
+    server.login(EMAIL_SENDER, EMAIL_PASSWORD)
+    server.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, msg.as_string())
+    server.quit()
 
 
 
@@ -57,7 +61,7 @@ def scrape():
         unique_id = hashlib.md5(text.encode("utf-8")).hexdigest()
 
         if unique_id not in cache:
-            send_email("New Property Found", f"Details:\n{text}\nLink: {BASE_URL}{link_tag['href']}")
+            send_email("New Item Found", f"Details:\n{text}\nLink: {BASE_URL}{link_tag['href']}")
             cache.add(unique_id)
 
     save_cache(cache)
