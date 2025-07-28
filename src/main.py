@@ -48,7 +48,7 @@ def send_email(subject, body):
 
 def scrape():
     cache = load_cache()
-    resp = requests.get(BASE_URL)
+    resp = requests.get(URL)
     soup = BeautifulSoup(resp.text, "html.parser")
 
     for block in soup.select("div.featured-item"):
