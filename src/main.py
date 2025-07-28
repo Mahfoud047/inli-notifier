@@ -64,7 +64,7 @@ def scrape():
             send_email("New Item Found", f"Details:\n{text}\nLink: {BASE_URL}{link_tag['href']}")
             cache.add(unique_id)
 
-    save_cache(cache)
+    save_to_cache(cache)
 
 if __name__ == "__main__":
     scrape()
