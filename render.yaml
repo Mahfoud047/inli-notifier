@@ -1,0 +1,8 @@
+services:
+  - type: worker
+    name: inli-scraper
+    env: python
+    plan: free
+    buildCommand: "pip install -r requirements.txt"
+    startCommand: "src/python main.py"
+    autoDeploy: true
