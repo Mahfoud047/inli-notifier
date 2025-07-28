@@ -36,3 +36,4 @@ jobs:
           BASE_URL: ${{ secrets.BASE_URL }}
           URL: ${{ secrets.URL }}
         run: python src/main.py
+
