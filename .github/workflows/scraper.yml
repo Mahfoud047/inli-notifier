@@ -13,12 +13,20 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v3
 
-      - name: Download previous cache file
-        uses: actions/download-artifact@v4
+      - name: Restore cache
+        uses: actions/cache@v3
         with:
-          name: scraper-cache
-          path: .
+          path: cache_ids.txt
+          key: scraper-cache
         continue-on-error: true
+
+      - name: Ensure cache file exists
+        run: |
+          if [ ! -f cache_ids.txt ]; then
+            echo "No cache found, creating empty file."
+            touch cache_ids.txt
+          fi
+
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -28,12 +36,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-#      - name: Load cache
-#        id: cache
-#        uses: actions/cache@v3
-#        with:
-#          path: cache_ids.txt
-#          key: cache-scraper
 
       - name: Run scraper
         env:
@@ -42,15 +44,10 @@ jobs:
           EMAIL_RECEIVER: ${{ secrets.EMAIL_RECEIVER }}
           BASE_URL: ${{ secrets.BASE_URL }}
           URL: ${{ secrets.URL }}
-        run: |
-          if [ ! -f cache_ids.txt ]; then
-            touch cache_ids.txt
-          fi
-          cat ./cache_ids.txt
-          python src/main.py
+        run: python src/main.py
           
-      - name: Upload updated cache
-        uses: actions/upload-artifact@v4
+      - name: Save cache
+        uses: actions/cache@v3
         with:
-          name: scraper-cache
           path: cache_ids.txt
+          key: scraper-cache
