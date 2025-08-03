@@ -26,8 +26,8 @@ def load_cache():
 
 # Save cache
 def save_to_cache(new_ids):
-    with open(CACHE_FILE, "w") as f:
-        f.write(new_ids)
+    with open("cache.txt", "w") as f:
+       f.write("\n".join(new_ids))
 
 # Send email notification
 def send_email(subject, body):
