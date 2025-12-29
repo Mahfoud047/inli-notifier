@@ -5,8 +5,7 @@ import smtplib
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import os
-
-
+import sys
 
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
@@ -20,14 +19,29 @@ CACHE_FILE = "cache_ids.txt"
 
 def load_cache():
     if not os.path.exists(CACHE_FILE):
+        print(f"[cache] {CACHE_FILE} does not exist, returning empty set")
         return set()
     with open(CACHE_FILE, "r") as f:
-        return set(f.read().splitlines())
+        lines = f.read().splitlines()
+    print(f"[cache] loaded {len(lines)} entries")
+    return set(lines)
 
 # Save cache
 def save_to_cache(new_ids):
+    print(f"[cache] saving {len(new_ids)} ids to {CACHE_FILE}")
     with open(CACHE_FILE, "w") as f:
-       f.write("\n".join(new_ids))
+       f.write("\n".join(sorted(new_ids)))
+       f.flush()
+       os.fsync(f.fileno())
+    # print file contents for debugging
+    try:
+        with open(CACHE_FILE, "r") as f:
+            print("---- cache file contents ----")
+            print(f.read())
+            print("---- end cache file ----")
+    except Exception as e:
+        print(f"[cache] error reading back cache file: {e}", file=sys.stderr)
+
 
 # Send email notification
 def send_email(subject, body):
@@ -39,7 +53,7 @@ def send_email(subject, body):
 
     server = smtplib.SMTP(SMTP_SERVER, SMTP_PORT)
     server.starttls()
-    print(EMAIL_SENDER)
+    print(f"[email] logging in as {EMAIL_SENDER}")
     server.login(EMAIL_SENDER, EMAIL_PASSWORD)
     server.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, msg.as_string())
     server.quit()
