@@ -10,33 +10,18 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
-        uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
-
       - name: Restore cache
         id: restore-cache
         uses: actions/cache@v3
         with:
-          path: cache_ids.txt
-          key: scraper-cache
+         path: cache_ids.txt
+         key: scraper-cache
 
       - name: Debug cache restore
         run: |
-          echo "cache-hit=${{ steps.restore-cache.outputs.cache-hit }}"
+          echo "restore cache-hit=${{ steps.restore-cache.outputs.cache-hit }}"
           ls -la cache_ids.txt || true
-          echo "---- cache_ids.txt contents ----"
-          cat cache_ids.txt || echo "<no file or empty>"
-          echo "---- end ----"
-
-      - name: Set up Python
-        uses: actions/setup-python@v4
-        with:
-          python-version: "3.11"
-
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+          cat cache_ids.txt || echo "<no file/empty>"
 
       - name: Run scraper
         env:
@@ -52,27 +37,13 @@ jobs:
         run: |
           if [ -s cache_ids.txt ]; then
             echo "cache-empty=false" >> $GITHUB_OUTPUT
-            echo "cache non-empty, contents:"
-            cat cache_ids.txt
           else
             echo "cache-empty=true" >> $GITHUB_OUTPUT
-            echo "cache file missing or empty"
           fi
 
-      - name: Save cache (only if non-empty)
-        if: steps.cache-check.outputs.cache-empty == 'false'
+      - name: Save cache (only if restore missed and file non-empty)
+        if: steps.restore-cache.outputs.cache-hit != 'true' && steps.cache-check.outputs.cache-empty == 'false'
         uses: actions/cache@v3
         with:
           path: cache_ids.txt
           key: scraper-cache
-
-      - name: (Optional) Commit cache file back to repo
-        if: always()
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git add cache_ids.txt || true
-          git commit -m "chore: update cache_ids.txt from workflow" || echo "no changes to commit"
-          git push origin HEAD:$(git rev-parse --abbrev-ref HEAD)
