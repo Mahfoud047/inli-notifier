@@ -47,11 +47,17 @@ def send_email(subject, body):
 
 
 def scrape():
+    print("loading cache...")
     cache = load_cache()
+    print(f"cache : {cache}")
+    print(f"requesting URL : {URL}")
     resp = requests.get(URL)
     soup = BeautifulSoup(resp.text, "html.parser")
 
-    for block in soup.select("div.featured-item"):
+    found_items = soup.select("div.featured-item")
+    print(f"found : {len(found_items)} items")
+
+    for block in found_items:
         link_tag = block.select_one("a[href^='/locations/offre']")
         details = block.select_one("div.featured-details span")
         if not link_tag or not details:
@@ -61,6 +67,7 @@ def scrape():
         unique_id = hashlib.md5(text.encode("utf-8")).hexdigest()
 
         if unique_id not in cache:
+            print(f"not in cache : {unique_id}")
             send_email("New Item Found", f"Details:\n{text}\nLink: {BASE_URL}{link_tag['href']}")
             cache.add(unique_id)
 
