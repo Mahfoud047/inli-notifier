@@ -2,26 +2,40 @@ name: Run Scraper
 
 on:
   schedule:
-    - cron: "*/30 * * * *"
-  workflow_dispatch:
+    - cron: "*/30 * * * *" # Every 30 minutes
+  workflow_dispatch: # Allow manual trigger
 
 jobs:
   scrape:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
       - name: Restore cache
-        id: restore-cache
         uses: actions/cache@v3
         with:
-         path: cache_ids.txt
-         key: scraper-cache
+          path: cache_ids.txt
+          key: scraper-cache
+        continue-on-error: true
 
-      - name: Debug cache restore
+      - name: Ensure cache file exists
         run: |
-          echo "restore cache-hit=${{ steps.restore-cache.outputs.cache-hit }}"
-          ls -la cache_ids.txt || true
-          cat cache_ids.txt || echo "<no file/empty>"
+          if [ ! -f cache_ids.txt ]; then
+            echo "No cache found, creating empty file."
+            touch cache_ids.txt
+          fi
+
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
 
       - name: Run scraper
         env:
@@ -31,18 +45,8 @@ jobs:
           BASE_URL: ${{ secrets.BASE_URL }}
           URL: ${{ vars.URL }}
         run: python src/main.py
-
-      - name: Show cache file before deciding to save
-        id: cache-check
-        run: |
-          if [ -s cache_ids.txt ]; then
-            echo "cache-empty=false" >> $GITHUB_OUTPUT
-          else
-            echo "cache-empty=true" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Save cache (only if restore missed and file non-empty)
-        if: steps.restore-cache.outputs.cache-hit != 'true' && steps.cache-check.outputs.cache-empty == 'false'
+          
+      - name: Save cache
         uses: actions/cache@v3
         with:
           path: cache_ids.txt
