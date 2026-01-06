@@ -3,7 +3,7 @@ name: Run Scraper
 on:
   schedule:
     - cron: "*/30 * * * *" # Every 30 minutes
-  workflow_dispatch: # Allow manual trigger
+  workflow_dispatch:
 
 jobs:
   scrape:
@@ -12,13 +12,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v3
-
-      - name: Restore cache
-        uses: actions/cache@v3
         with:
-          path: cache_ids.txt
-          key: scraper-cache
-        continue-on-error: true
+          persist-credentials: true
 
       - name: Ensure cache file exists
         run: |
@@ -26,7 +21,6 @@ jobs:
             echo "No cache found, creating empty file."
             touch cache_ids.txt
           fi
-
 
       - name: Set up Python
         uses: actions/setup-python@v4
@@ -36,7 +30,6 @@ jobs:
       - name: Install dependencies
         run: pip install -r requirements.txt
 
-
       - name: Run scraper
         env:
           EMAIL_SENDER: ${{ secrets.EMAIL_SENDER }}
@@ -45,9 +38,11 @@ jobs:
           BASE_URL: ${{ secrets.BASE_URL }}
           URL: ${{ vars.URL }}
         run: python src/main.py
-          
-      - name: Save cache
-        uses: actions/cache@v3
-        with:
-          path: cache_ids.txt
-          key: scraper-cache
+
+      - name: Commit and push updated cache
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add cache_ids.txt
+          git commit -m "ci: update scraper cache" || echo "No changes to commit"
+          git push
