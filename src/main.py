@@ -85,7 +85,7 @@ def scrape():
 
         if unique_id not in cache:
             print(f"not in cache : {unique_id}")
-            send_email("New Item Found", f"Details:\n{text}\nLink: {BASE_URL}{link_tag['href']}")
+            send_email("Nouvelle Announce Inli publiée", f"Details:\n{text}\nLink: {BASE_URL}{link_tag['href']}")
             cache.add(unique_id)
 
     save_to_cache(cache)
