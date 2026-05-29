@@ -11,7 +11,7 @@ SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
 EMAIL_SENDER = os.getenv("EMAIL_SENDER")
 EMAIL_PASSWORD = os.getenv("EMAIL_PASSWORD")
-EMAIL_RECEIVER = os.getenv("EMAIL_RECEIVER")
+EMAIL_RECEIVERS = os.getenv("EMAIL_RECEIVERS", "").split(",")
 BASE_URL = os.getenv("BASE_URL")
 URL = os.getenv("URL")
 
@@ -44,10 +44,13 @@ def save_to_cache(new_ids):
 
 
 # Send email notification
-def send_email(subject, body):
+def send_email(subject, body, receivers=None):
+    if receivers is None:
+        receivers = EMAIL_RECEIVERS  # expects a list, e.g. ["a@x.com", "b@x.com"]
+
     msg = MIMEMultipart()
     msg['From'] = EMAIL_SENDER
-    msg['To'] = EMAIL_RECEIVER
+    msg['To'] = ", ".join(receivers)
     msg['Subject'] = subject
     msg.attach(MIMEText(body, 'plain'))
 
@@ -55,7 +58,7 @@ def send_email(subject, body):
     server.starttls()
     print(f"[email] logging in as {EMAIL_SENDER}")
     server.login(EMAIL_SENDER, EMAIL_PASSWORD)
-    server.sendmail(EMAIL_SENDER, EMAIL_RECEIVER, msg.as_string())
+    server.sendmail(EMAIL_SENDER, receivers, msg.as_string())
     server.quit()
 
 
